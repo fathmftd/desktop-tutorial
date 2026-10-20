@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Absensi BEM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="bg-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">B</div>
+      <div>
+        <div class="brand-name" id="orgName">BEM</div>
+        <div class="brand-sub">Sistem Absensi QR</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-page="dashboard"><span class="ico">🏠</span><span>Dashboard</span></button>
+      <button class="nav-item" data-page="scan"><span class="ico">📷</span><span>Scan QR</span></button>
+      <button class="nav-item" data-page="agenda"><span class="ico">📅</span><span>Agenda</span></button>
+      <button class="nav-item" data-page="anggota"><span class="ico">👥</span><span>Anggota</span></button>
+      <button class="nav-item" data-page="grafik"><span class="ico">📊</span><span>Grafik</span></button>
+      <button class="nav-item" data-page="pengaturan"><span class="ico">⚙️</span><span>Pengaturan</span></button>
+    </nav>
+    <div class="sidebar-foot">Data tersimpan di perangkat ini</div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <header class="page-head">
+        <div>
+          <h1>Halo, Pengurus! 👋</h1>
+          <p class="muted" id="todayLabel"></p>
+        </div>
+        <button class="btn btn-primary" data-goto="scan">📷 Mulai Scan</button>
+      </header>
+
+      <div class="tiles">
+        <div class="tile t-indigo"><div class="tile-ico">👥</div><div><div class="tile-val" id="stMembers">0</div><div class="tile-lbl">Total Anggota</div></div></div>
+        <div class="tile t-pink"><div class="tile-ico">📅</div><div><div class="tile-val" id="stEvents">0</div><div class="tile-lbl">Agenda Bulan Ini</div></div></div>
+        <div class="tile t-green"><div class="tile-ico">✅</div><div><div class="tile-val" id="stRate">0%</div><div class="tile-lbl">Rata-rata Kehadiran</div></div></div>
+        <div class="tile t-amber"><div class="tile-ico">⚡</div><div><div class="tile-val" id="stToday">0</div><div class="tile-lbl">Scan Hari Ini</div></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Tren Kehadiran Bulan Ini</h3><span class="chip" id="dashMonthLabel"></span></div>
+          <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+          <p class="empty small" id="trendEmpty" hidden>Belum ada agenda bulan ini.</p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Agenda Terdekat</h3><button class="btn btn-ghost btn-sm" data-goto="agenda">Lihat semua</button></div>
+          <div id="upcomingList" class="list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>🏆 Anggota Paling Rajin Bulan Ini</h3></div>
+        <div id="topMembers" class="top-members"></div>
+      </div>
+    </section>
+
+    <!-- SCAN -->
+    <section class="page" id="page-scan">
+      <header class="page-head">
+        <div><h1>Scan QR Kehadiran</h1><p class="muted">Arahkan kamera ke QR pada kartu anggota.</p></div>
+      </header>
+      <div class="grid-2">
+        <div class="card">
+          <label class="field">
+            <span>Pilih Agenda</span>
+            <select id="scanEvent"></select>
+          </label>
+          <div id="scanEventInfo" class="event-info"></div>
+          <div class="scanner-wrap">
+            <div id="reader"></div>
+            <div class="scanner-placeholder" id="scannerPlaceholder">
+              <div class="scan-frame"><span></span><span></span><span></span><span></span></div>
+              <p>Kamera belum aktif</p>
+            </div>
+          </div>
+          <div class="row gap">
+            <button class="btn btn-primary grow" id="btnStartScan">▶ Aktifkan Kamera</button>
+            <button class="btn btn-danger grow" id="btnStopScan" hidden>■ Matikan Kamera</button>
+          </div>
+          <details class="manual">
+            <summary>Absen manual (tanpa QR)</summary>
+            <div class="row gap wrap">
+              <select id="manualMember" class="grow"></select>
+              <select id="manualStatus">
+                <option value="hadir">Hadir</option>
+                <option value="terlambat">Terlambat</option>
+                <option value="izin">Izin</option>
+                <option value="sakit">Sakit</option>
+              </select>
+              <button class="btn btn-secondary" id="btnManual">Simpan</button>
+            </div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Sudah Absen</h3><span class="chip" id="scanCount">0 / 0</span></div>
+          <div class="progress"><div id="scanProgress"></div></div>
+          <div id="scanList" class="list scroll"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENDA -->
+    <section class="page" id="page-agenda">
+      <header class="page-head">
+        <div><h1>Agenda Rapat &amp; Kegiatan</h1><p class="muted">Buat agenda lalu buka scanner untuk absensi.</p></div>
+        <button class="btn btn-primary" id="btnAddEvent">＋ Agenda Baru</button>
+      </header>
+      <div class="toolbar">
+        <input type="month" id="agendaMonth">
+        <div class="seg" id="agendaFilter">
+          <button class="active" data-v="">Semua</button>
+          <button data-v="Rapat">Rapat</button>
+          <button data-v="Kegiatan">Kegiatan</button>
+        </div>
+      </div>
+      <div id="eventList" class="event-grid"></div>
+    </section>
+
+    <!-- ANGGOTA -->
+    <section class="page" id="page-anggota">
+      <header class="page-head">
+        <div><h1>Data Anggota</h1><p class="muted">Kelola anggota dan cetak kartu QR mereka.</p></div>
+        <div class="row gap wrap">
+          <button class="btn btn-secondary" id="btnPrintCards">🖨️ Cetak Semua Kartu</button>
+          <button class="btn btn-primary" id="btnAddMember">＋ Tambah Anggota</button>
+        </div>
+      </header>
+      <div class="toolbar">
+        <input type="search" id="memberSearch" placeholder="Cari nama, NIM, atau divisi…">
+        <select id="memberDivFilter"><option value="">Semua Divisi</option></select>
+      </div>
+      <div id="memberList" class="member-grid"></div>
+    </section>
+
+    <!-- GRAFIK -->
+    <section class="page" id="page-grafik">
+      <header class="page-head">
+        <div><h1>Grafik Kehadiran</h1><p class="muted">Rekap kehadiran per anggota selama satu bulan.</p></div>
+      </header>
+      <div class="toolbar">
+        <select id="grafikMember"></select>
+        <input type="month" id="grafikMonth">
+      </div>
+
+      <div class="profile-card card" id="grafikProfile"></div>
+
+      <div class="tiles">
+        <div class="tile t-indigo"><div class="tile-ico">🎯</div><div><div class="tile-val" id="gRate">0%</div><div class="tile-lbl">Persentase Hadir</div></div></div>
+        <div class="tile t-green"><div class="tile-ico">✅</div><div><div class="tile-val" id="gHadir">0</div><div class="tile-lbl">Hadir Tepat Waktu</div></div></div>
+        <div class="tile t-amber"><div class="tile-ico">⏰</div><div><div class="tile-val" id="gTelat">0</div><div class="tile-lbl">Terlambat</div></div></div>
+        <div class="tile t-pink"><div class="tile-ico">❌</div><div><div class="tile-val" id="gAlpha">0</div><div class="tile-lbl">Izin/Sakit/Alpha</div></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Komposisi Status</h3></div>
+          <div class="chart-box sm"><canvas id="chartDonut"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Kehadiran per Minggu</h3></div>
+          <div class="chart-box sm"><canvas id="chartWeekly"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Kalender Kehadiran</h3>
+          <div class="legend">
+            <span><i class="lgd hadir"></i>Hadir</span><span><i class="lgd terlambat"></i>Terlambat</span>
+            <span><i class="lgd izin"></i>Izin/Sakit</span><span><i class="lgd alpha"></i>Alpha</span>
+          </div>
+        </div>
+        <div id="calendar" class="calendar"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Riwayat Agenda</h3></div>
+        <div id="grafikHistory" class="list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Peringkat Kehadiran Semua Anggota</h3></div>
+        <div class="chart-box" id="rankBox"><canvas id="chartRank"></canvas></div>
+      </div>
+    </section>
+
+    <!-- PENGATURAN -->
+    <section class="page" id="page-pengaturan">
+      <header class="page-head"><div><h1>Pengaturan</h1><p class="muted">Identitas organisasi dan cadangan data.</p></div></header>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Identitas</h3>
+          <label class="field"><span>Nama Organisasi</span><input id="setOrg" placeholder="BEM Universitas …"></label>
+          <label class="field"><span>Periode Kepengurusan</span><input id="setPeriode" placeholder="2026/2027"></label>
+          <label class="field"><span>Toleransi keterlambatan default (menit)</span><input id="setTol" type="number" min="0" value="15"></label>
+          <button class="btn btn-primary" id="btnSaveSettings">Simpan</button>
+        </div>
+        <div class="card">
+          <h3>Data</h3>
+          <p class="muted small">Data disimpan di browser perangkat ini. Lakukan backup secara berkala.</p>
+          <div class="stack">
+            <button class="btn btn-secondary" id="btnExportJson">⬇️ Backup Data (JSON)</button>
+            <label class="btn btn-secondary file-btn">⬆️ Pulihkan Backup<input type="file" id="importJson" accept="application/json"></label>
+            <button class="btn btn-secondary" id="btnExportCsv">📄 Rekap Bulan Ini (CSV)</button>
+            <button class="btn btn-secondary" id="btnSeed">✨ Muat Data Contoh</button>
+            <button class="btn btn-danger" id="btnReset">🗑️ Hapus Semua Data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="dashboard"><span class="ico">🏠</span><span>Beranda</span></button>
+    <button class="nav-item" data-page="agenda"><span class="ico">📅</span><span>Agenda</span></button>
+    <button class="nav-item scan-fab" data-page="scan"><span class="ico">📷</span></button>
+    <button class="nav-item" data-page="anggota"><span class="ico">👥</span><span>Anggota</span></button>
+    <button class="nav-item" data-page="grafik"><span class="ico">📊</span><span>Grafik</span></button>
+  </nav>
+
+  <!-- Modal -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-x" data-close aria-label="Tutup">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <div id="printArea"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
-# Welcome to GitHub Desktop!
+# Absensi BEM
 
-This is your README. READMEs are where you can communicate what your project is and how to use it.
+Aplikasi absensi anggota BEM dengan scan QR untuk setiap rapat dan kegiatan,
+lengkap dengan grafik kehadiran per anggota selama satu bulan dan menu kelola anggota.
 
-Write your name on line 6, save it, and then head back to GitHub Desktop.
+👉 Lihat [`absensi-bem/`](absensi-bem/README.md) untuk fitur dan cara menjalankan.
