@@ -338,6 +338,21 @@
     $('#btnStartScan').hidden = false;
     $('#btnStopScan').hidden = true;
   }
+  // Alternatif: foto QR lewat kamera bawaan HP / galeri (berguna jika kamera langsung diblokir browser).
+  $('#scanPhoto').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    e.target.value = '';
+    if (!eventById(selectedEventId)) { toast('Pilih agenda terlebih dahulu.', 'warn'); return; }
+    if (typeof Html5Qrcode === 'undefined') { toast('Library scanner gagal dimuat. Periksa koneksi internet.', 'error'); return; }
+    if (scanner?.isScanning) await stopScanner();
+    try {
+      const text = await new Html5Qrcode('reader-file', { verbose: false }).scanFile(file, false);
+      lastScan = { text: '', at: 0 };
+      onScan(text);
+    } catch {
+      beep(false); toast('QR tidak terbaca di foto. Coba foto lebih dekat & terang.', 'error');
+    }
+  });
   $('#btnStartScan').addEventListener('click', startScanner);
   $('#btnStopScan').addEventListener('click', stopScanner);
 

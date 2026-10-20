@@ -89,10 +89,12 @@
               <p>Kamera belum aktif</p>
             </div>
           </div>
-          <div class="row gap">
+          <div class="row gap wrap">
             <button class="btn btn-primary grow" id="btnStartScan">▶ Aktifkan Kamera</button>
             <button class="btn btn-danger grow" id="btnStopScan" hidden>■ Matikan Kamera</button>
+            <label class="btn btn-secondary file-btn" title="Ambil/pilih foto QR jika kamera langsung tidak bisa dipakai">📸 Scan dari Foto<input type="file" id="scanPhoto" accept="image/*" capture="environment"></label>
           </div>
+          <div id="reader-file" hidden></div>
           <details class="manual">
             <summary>Absen manual (tanpa QR)</summary>
             <div class="row gap wrap">

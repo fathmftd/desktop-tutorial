@@ -5,7 +5,7 @@ Tanpa server: cukup buka di browser, data tersimpan di perangkat (localStorage).
 
 ## Fitur
 - **Dashboard** — total anggota, jumlah agenda bulan ini, rata-rata kehadiran, scan hari ini, grafik tren kehadiran, agenda terdekat, dan papan peringkat anggota paling rajin.
-- **Scan QR** — pilih agenda, aktifkan kamera, lalu scan kartu QR anggota. Status *Hadir*/*Terlambat* ditentukan otomatis dari jam mulai + toleransi. Ada bunyi & getar sebagai tanda berhasil, cegah absen ganda, serta absen manual (Hadir/Terlambat/Izin/Sakit).
+- **Scan QR** — pilih agenda, aktifkan kamera (atau **Scan dari Foto** bila kamera langsung tidak bisa dipakai), lalu scan kartu QR anggota. Status *Hadir*/*Terlambat* ditentukan otomatis dari jam mulai + toleransi. Ada bunyi & getar sebagai tanda berhasil, cegah absen ganda, serta absen manual (Hadir/Terlambat/Izin/Sakit).
 - **Agenda** — buat, ubah, dan hapus agenda Rapat/Kegiatan; rekap per agenda (ubah status tiap anggota) dan unduh CSV.
 - **Anggota** — tambah/edit/hapus anggota (nama, NIM, jabatan, divisi, HP, email, tanggal bergabung), pencarian & filter divisi, **kartu QR** yang bisa diunduh (PNG) atau **dicetak semua sekaligus**.
 - **Grafik per anggota (1 bulan)** — persentase kehadiran & predikat, diagram donat komposisi status, grafik batang per minggu, kalender kehadiran, riwayat agenda, dan peringkat kehadiran seluruh anggota.
@@ -21,8 +21,9 @@ python3 -m http.server 8000
 # buka http://localhost:8000
 ```
 
-Untuk dipakai dari HP, unggah folder ini ke hosting HTTPS gratis, misalnya **GitHub Pages**
-(Settings → Pages → pilih branch) atau Netlify/Vercel.
+Untuk dipakai dari HP, unggah folder ini ke hosting HTTPS gratis:
+- **Netlify Drop** — buka https://app.netlify.com/drop lalu seret folder `absensi-bem` ke halaman itu.
+- **GitHub Pages** — Settings → Pages → pilih branch (repo privat butuh GitHub berbayar, atau jadikan repo publik).
 
 ## Alur Penggunaan
 1. **Anggota → Tambah Anggota**, lalu bagikan/cetak **Kartu QR** setiap anggota.
