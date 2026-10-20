@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primer">#1E6F5C</color>
+    <color name="primer_gelap">#155244</color>
+    <color name="aksen">#F2A541</color>
+    <color name="latar">#F4F6F5</color>
+    <color name="kartu">#FFFFFF</color>
+    <color name="teks">#1B1F1E</color>
+    <color name="teks_redup">#5F6B67</color>
+    <color name="lewat">#9AA5A1</color>
+</resources>

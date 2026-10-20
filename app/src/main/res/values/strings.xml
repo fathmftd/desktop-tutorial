@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pengingat Kegiatan</string>
+    <string name="tambah">+ Tambah Kegiatan</string>
+    <string name="kosong">Belum ada kegiatan.\nTekan \"+ Tambah Kegiatan\" untuk membuat pengingat.</string>
+    <string name="judul_baru">Kegiatan Baru</string>
+    <string name="judul_ubah">Ubah Kegiatan</string>
+    <string name="label_judul">Nama kegiatan</string>
+    <string name="hint_judul">Contoh: Rapat tim, minum obat</string>
+    <string name="label_catatan">Catatan (opsional)</string>
+    <string name="hint_catatan">Lokasi, hal yang perlu dibawa, dll.</string>
+    <string name="label_waktu">Tanggal &amp; jam</string>
+    <string name="label_ulang">Ulangi</string>
+    <string name="label_sebelum">Ingatkan</string>
+    <string name="simpan">Simpan</string>
+    <string name="hapus">Hapus</string>
+    <string name="batal">Batal</string>
+    <string name="channel_nama">Pengingat kegiatan</string>
+    <string name="channel_desk">Notifikasi saat kegiatan akan dimulai</string>
+    <string name="tunda">Tunda 10 menit</string>
+    <string name="selesai">Selesai</string>
+    <string-array name="pilihan_ulang">
+        <item>Tidak berulang</item>
+        <item>Setiap hari</item>
+        <item>Setiap minggu</item>
+        <item>Setiap bulan</item>
+    </string-array>
+    <string-array name="pilihan_sebelum">
+        <item>Tepat waktu</item>
+        <item>5 menit sebelumnya</item>
+        <item>15 menit sebelumnya</item>
+        <item>30 menit sebelumnya</item>
+        <item>1 jam sebelumnya</item>
+        <item>1 hari sebelumnya</item>
+    </string-array>
+</resources>

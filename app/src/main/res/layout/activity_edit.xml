@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            style="@style/Label"
+            android:text="@string/label_judul" />
+
+        <EditText
+            android:id="@+id/input_judul"
+            style="@style/Input"
+            android:hint="@string/hint_judul"
+            android:inputType="textCapSentences" />
+
+        <TextView
+            style="@style/Label"
+            android:text="@string/label_waktu" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/pilih_tanggal"
+                style="@style/Input"
+                android:layout_width="0dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="3"
+                android:gravity="start|center_vertical"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/pilih_jam"
+                style="@style/Input"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/Label"
+            android:text="@string/label_sebelum" />
+
+        <Spinner
+            android:id="@+id/pilih_sebelum"
+            style="@style/Input"
+            android:background="@drawable/bg_spinner"
+            android:entries="@array/pilihan_sebelum" />
+
+        <TextView
+            style="@style/Label"
+            android:text="@string/label_ulang" />
+
+        <Spinner
+            android:id="@+id/pilih_ulang"
+            style="@style/Input"
+            android:background="@drawable/bg_spinner"
+            android:entries="@array/pilihan_ulang" />
+
+        <TextView
+            style="@style/Label"
+            android:text="@string/label_catatan" />
+
+        <EditText
+            android:id="@+id/input_catatan"
+            style="@style/Input"
+            android:gravity="top|start"
+            android:hint="@string/hint_catatan"
+            android:inputType="textMultiLine|textCapSentences"
+            android:minLines="3" />
+
+        <Button
+            android:id="@+id/tombol_simpan"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_tombol"
+            android:text="@string/simpan"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</ScrollView>
