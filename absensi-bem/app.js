@@ -36,6 +36,32 @@
   };
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
+  // Di aplikasi Android (Capacitor) unduhan biasa tidak jalan: simpan file lalu buka menu Bagikan.
+  const isNative = !!window.Capacitor?.isNativePlatform?.();
+  async function saveFile(blob, name) {
+    name = name.replace(/[^\w.-]+/g, '_');
+    const { Filesystem, Share } = window.Capacitor?.Plugins || {};
+    if (isNative && Filesystem && Share) {
+      try {
+        const data = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result).split(',')[1]);
+          r.onerror = rej;
+          r.readAsDataURL(blob);
+        });
+        const { uri } = await Filesystem.writeFile({ path: name, data, directory: 'CACHE' });
+        await Share.share({ title: name, url: uri, dialogTitle: 'Simpan / bagikan file' });
+      } catch (err) {
+        if (!/cancel/i.test(err?.message || '')) toast('Gagal menyimpan file.', 'error');
+      }
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
   // ---------- Penyimpanan ----------
   const defaultState = () => ({
     settings: { org: 'BEM Universitas', periode: '2026/2027', tol: 15 },
@@ -629,14 +655,12 @@
     g.fillStyle = '#6b7280'; g.font = '500 24px "Plus Jakarta Sans", sans-serif';
     g.fillText(`${m.jabatan || 'Anggota'}${m.divisi ? ' · ' + m.divisi : ''}`, W / 2, 695, W - 60);
     if (m.nim) g.fillText(`NIM ${m.nim}`, W / 2, 735);
-    const a = document.createElement('a');
-    a.download = `kartu-${m.nama.replace(/\s+/g, '-').toLowerCase()}.png`;
-    a.href = c.toDataURL('image/png');
-    a.click();
+    c.toBlob(blob => saveFile(blob, `kartu-${m.nama.replace(/\s+/g, '-').toLowerCase()}.png`), 'image/png');
   }
 
   $('#btnPrintCards').addEventListener('click', () => {
     if (!state.members.length) { toast('Belum ada anggota untuk dicetak.', 'warn'); return; }
+    if (isNative) { toast('Cetak belum tersedia di aplikasi HP. Unduh kartu per anggota lalu cetak dari galeri, atau buka versi web di laptop.', 'info', '🖨️'); return; }
     const area = $('#printArea');
     area.innerHTML = [...state.members].sort((a, b) => a.nama.localeCompare(b.nama)).map(idCardHtml).join('');
     paintQrs(area);
@@ -796,10 +820,7 @@
   });
 
   function downloadBlob(content, name, type) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([content], { type }));
-    a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    saveFile(content instanceof Blob ? content : new Blob([content], { type }), name);
   }
   function downloadCsv(rows, name) {
     const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
@@ -888,6 +909,25 @@
   }
   applyBrand();
   render.dashboard();
+
+  // PWA: bisa dipasang ke layar utama HP dan dibuka tanpa internet.
+  if ('serviceWorker' in navigator && !isNative && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* mis. dibuka di dalam iframe */ });
+  }
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    installPrompt = e;
+    $('#btnInstall').hidden = false;
+  });
+  $('#btnInstall').addEventListener('click', async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    $('#btnInstall').hidden = true;
+  });
+  window.addEventListener('appinstalled', () => toast('Aplikasi terpasang di HP Anda!', 'success', '📲'));
   if (!state.members.length && !state.events.length) {
     setTimeout(() => toast('Selamat datang! Tambah anggota atau muat data contoh di menu Pengaturan.', 'info', '👋'), 600);
   }

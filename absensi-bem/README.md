@@ -12,6 +12,24 @@ Tanpa server: cukup buka di browser, data tersimpan di perangkat (localStorage).
 - **Pengaturan** — nama organisasi & periode, toleransi keterlambatan default, backup/pulihkan JSON, rekap bulanan CSV, data contoh, hapus semua data.
 - Tampilan responsif (sidebar di desktop, navigasi bawah di HP) dan mendukung mode gelap.
 
+## 📲 Download di HP
+
+### Android — file APK
+1. Buka halaman **Releases** repo ini di HP (`https://github.com/fathmftd/desktop-tutorial/releases/tag/apk-terbaru`, login GitHub dulu karena repo privat).
+2. Unduh **Absensi-BEM.apk**, lalu buka file tersebut.
+3. Jika diminta, izinkan *Instal dari sumber tidak dikenal* untuk browser/File Manager, lalu tekan **Instal**.
+4. Saat pertama scan, izinkan akses **kamera**.
+
+APK dibangun otomatis oleh GitHub Actions (`.github/workflows/android-apk.yml`) setiap ada perubahan pada folder `absensi-bem/` atau `mobile/`.
+Di aplikasi Android, tombol unduh (kartu QR, CSV, backup) membuka menu **Bagikan** untuk menyimpan ke Drive/WhatsApp/File.
+
+### Android & iPhone — pasang dari browser (PWA)
+Setelah aplikasi di-hosting di HTTPS (lihat di bawah), buka link-nya di HP lalu:
+- **Android (Chrome):** tekan tombol **📲 Pasang Aplikasi** di Dashboard, atau menu ⋮ → *Instal aplikasi / Tambahkan ke layar utama*.
+- **iPhone (Safari):** tombol Bagikan → *Tambahkan ke Layar Utama*.
+
+Aplikasi tetap bisa dibuka tanpa internet setelah dipasang.
+
 ## Cara Menjalankan
 Kamera hanya bisa diakses lewat **HTTPS** atau **localhost**.
 
@@ -35,4 +53,4 @@ Untuk dipakai dari HP, unggah folder ini ke hosting HTTPS gratis:
 > Ingin mencoba cepat? Buka **Pengaturan → Muat Data Contoh**.
 
 ## Teknologi
-HTML, CSS, JavaScript murni + [Chart.js](https://www.chartjs.org/), [html5-qrcode](https://github.com/mebjas/html5-qrcode), dan [qrcodejs](https://github.com/davidshimjs/qrcodejs) (dimuat dari CDN).
+HTML, CSS, JavaScript murni (PWA) + [Capacitor](https://capacitorjs.com/) untuk APK Android + [Chart.js](https://www.chartjs.org/), [html5-qrcode](https://github.com/mebjas/html5-qrcode), dan [qrcodejs](https://github.com/davidshimjs/qrcodejs) (disertakan di folder `vendor/`, jadi bisa berjalan offline).

@@ -1,0 +1,19 @@
+{
+  "name": "absensi-bem-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pembungkus Android (Capacitor) untuk aplikasi Absensi BEM",
+  "scripts": {
+    "prepare-web": "rm -rf www && cp -r ../absensi-bem www && rm -f www/README.md",
+    "add-android": "npx cap add android"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.2.1",
+    "@capacitor/core": "6.2.1",
+    "@capacitor/filesystem": "6.0.3",
+    "@capacitor/share": "6.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.2.1"
+  }
+}

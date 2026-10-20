@@ -1,0 +1,65 @@
+name: Build APK Absensi BEM
+
+on:
+  push:
+    paths:
+      - "absensi-bem/**"
+      - "mobile/**"
+      - ".github/workflows/android-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Siapkan proyek Android
+        working-directory: mobile
+        run: |
+          npm ci
+          npm run prepare-web
+          npx cap add android
+          pip install --quiet pillow
+          python3 scripts/setup-android.py
+          npx cap sync android
+
+      - name: Build APK
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Absensi-BEM.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Absensi-BEM-apk
+          path: Absensi-BEM.apk
+
+      - name: Terbitkan ke Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-terbaru --yes --cleanup-tag || true
+          gh release create apk-terbaru Absensi-BEM.apk \
+            --target "$GITHUB_SHA" \
+            --title "Absensi BEM — APK Android" \
+            --notes "APK terbaru dari branch \`${GITHUB_REF_NAME}\` (commit ${GITHUB_SHA::7}). Unduh **Absensi-BEM.apk** di HP Android, lalu buka file untuk memasang (izinkan *Instal dari sumber tidak dikenal* bila diminta)."

@@ -1,0 +1,8 @@
+{
+  "appId": "id.bem.absensi",
+  "appName": "Absensi BEM",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
