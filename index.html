@@ -825,7 +825,34 @@
             downloadCSV(['NIM,Nama', ...rows].join('\n'), 'Database_Anggota_BEM.csv');
         }
 
+        function isNativeApp() {
+            return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        }
+
+        function callNativePlugin(plugin, method, options) {
+            const p = window.Capacitor.Plugins && window.Capacitor.Plugins[plugin];
+            if (p && typeof p[method] === 'function') return p[method](options);
+            return window.Capacitor.nativePromise(plugin, method, options);
+        }
+
+        // Di APK (Android WebView) link download tidak berfungsi, jadi file disimpan lalu dibagikan
+        async function saveNativeFile(content, fileName) {
+            const bytes = new TextEncoder().encode(content);
+            let binary = '';
+            bytes.forEach(b => { binary += String.fromCharCode(b); });
+            await callNativePlugin('Filesystem', 'writeFile', { path: fileName, data: btoa(binary), directory: 'CACHE' });
+            const { uri } = await callNativePlugin('Filesystem', 'getUri', { path: fileName, directory: 'CACHE' });
+            await callNativePlugin('Share', 'share', { title: fileName, url: uri, dialogTitle: 'Simpan / Kirim CSV' });
+        }
+
         function downloadCSV(csvContent, fileName) {
+            if (isNativeApp()) {
+                saveNativeFile('\uFEFF' + csvContent, fileName).catch(e => {
+                    console.error(e);
+                    showToast('Gagal menyimpan file CSV.', 'error');
+                });
+                return;
+            }
             const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -1075,7 +1102,7 @@
             document.getElementById('btn-install').classList.add('hidden');
         }
 
-        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+        if ('serviceWorker' in navigator && location.protocol !== 'file:' && !isNativeApp()) {
             navigator.serviceWorker.register('sw.js').catch(e => console.error(e));
         }
 
