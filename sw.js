@@ -1,9 +1,10 @@
 // Service worker: cache aplikasi agar bisa dibuka offline setelah kunjungan pertama.
-const CACHE = 'absensi-bem-v1';
+const CACHE = 'absensi-bem-v2';
 const ASSETS = [
     './',
     './index.html',
     './manifest.webmanifest',
+    './data-anggota.js',
     './icons/logo.png',
     './icons/icon-192.png',
     './icons/icon-512.png',

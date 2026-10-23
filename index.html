@@ -181,6 +181,8 @@
                     </div>
                 </div>
 
+                <p id="summary-absent" class="hidden -mt-2 mb-3 text-xs text-gray-500"></p>
+
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
@@ -348,6 +350,7 @@
     <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 w-64 pointer-events-none"></div>
 
     <!-- Scripts -->
+    <script src="data-anggota.js"></script>
     <script>
         // --- State Management ---
         const STORAGE_KEY = 'absensi-bem-pem-akamigas-v1';
@@ -365,7 +368,8 @@
                     attendanceData,
                     eventsData,
                     membersData,
-                    activeEventId: document.getElementById('active-event-select').value
+                    activeEventId: document.getElementById('active-event-select').value,
+                    seedVersion: SEED_VERSION
                 }));
             } catch (e) {
                 console.error(e);
@@ -380,6 +384,10 @@
                 attendanceData = state.attendanceData || [];
                 eventsData = state.eventsData || [];
                 membersData = state.membersData || [];
+                if (state.seedVersion !== SEED_VERSION) {
+                    mergeDefaultMembers();
+                    saveState();
+                }
                 updateEventDropdowns();
                 document.getElementById('active-event-select').value = state.activeEventId || '';
                 return true;
@@ -394,8 +402,20 @@
             eventsData = [
                 { id: 'EVT-1', name: 'Rapat Koordinasi BEM', startTime: '15:00', lateTime: '15:30' }
             ];
-            membersData = [];
+            membersData = DEFAULT_MEMBERS.map(m => ({ ...m, qr: m.nim }));
             updateEventDropdowns();
+        }
+
+        // Tambahkan pengurus dari data-anggota.js yang belum ada & lengkapi prodi/jabatan
+        function mergeDefaultMembers() {
+            DEFAULT_MEMBERS.forEach(d => {
+                const existing = membersData.find(m => m.nim === d.nim);
+                if (existing) {
+                    Object.assign(existing, { prodi: d.prodi, tingkat: d.tingkat, jabatan: d.jabatan });
+                } else {
+                    membersData.push({ ...d, qr: d.nim });
+                }
+            });
         }
 
         function escapeHtml(str) {
@@ -617,7 +637,9 @@
             const parsed = parseQrContent(qrString);
             return membersData.find(m => m.qr === qrString)
                 || membersData.find(m => m.nim === qrString)
-                || membersData.find(m => m.nim === parsed.nim);
+                || membersData.find(m => m.nim === parsed.nim)
+                // QR berisi teks/URL yang memuat NIM, mis. "Nama - 241410017"
+                || (qrString.match(/\d{6,}/g) || []).map(n => membersData.find(m => m.nim === n)).find(Boolean);
         }
 
         function addMember() {
@@ -680,7 +702,10 @@
                 tr.className = "hover:bg-gray-50";
                 tr.innerHTML = `
                     <td class="px-3 py-2 border-b border-gray-100 font-mono text-xs text-blue-700 font-medium">${escapeHtml(member.nim)}</td>
-                    <td class="px-3 py-2 border-b border-gray-100 text-sm text-gray-800 whitespace-normal">${escapeHtml(member.nama)}</td>
+                    <td class="px-3 py-2 border-b border-gray-100 text-sm text-gray-800 whitespace-normal">
+                        ${escapeHtml(member.nama)}
+                        ${member.jabatan ? `<p class="text-[11px] text-gray-500 leading-tight">${escapeHtml(member.jabatan)}</p>` : ''}
+                    </td>
                     <td class="px-3 py-2 border-b border-gray-100 text-right">
                         <button class="text-red-400 hover:text-red-600" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
@@ -936,6 +961,7 @@
                 eventName: activeEvent.name,
                 nim: nim,
                 nama: namaMember,
+                jabatan: member ? (member.jabatan || '') : '',
                 tanggal: now.toLocaleDateString('id-ID'),
                 waktu: timestamp,
                 status: status
@@ -998,6 +1024,15 @@
             document.getElementById('summary-hadir').innerText = hadirCount;
             document.getElementById('summary-terlambat').innerText = terlambatCount;
 
+            const absentInfo = document.getElementById('summary-absent');
+            if (filterEventId !== 'ALL') {
+                const absent = getAbsentMembers(filterEventId).length;
+                absentInfo.innerText = `Belum hadir: ${absent} dari ${totalAnggota} anggota (tercantum di file Export).`;
+                absentInfo.classList.remove('hidden');
+            } else {
+                absentInfo.classList.add('hidden');
+            }
+
             if (filteredData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400 italic">Belum ada data kehadiran.</td></tr>`;
                 return;
@@ -1013,9 +1048,10 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50/50 transition-colors";
                 tr.innerHTML = `
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 whitespace-normal">
                         <p class="text-gray-800 font-semibold text-sm leading-tight">${escapeHtml(item.nama)}</p>
                         <p class="font-mono text-xs text-gray-500">${escapeHtml(item.nim)}</p>
+                        ${item.jabatan ? `<p class="text-[11px] text-gray-400 leading-tight">${escapeHtml(item.jabatan)}</p>` : ''}
                     </td>
                     <td class="px-4 py-3 text-gray-600 text-xs font-medium">${escapeHtml(item.waktu)}${item.tanggal ? `<br><span class="text-gray-400">${escapeHtml(item.tanggal)}</span>` : ''}</td>
                     <td class="px-4 py-3">${statusBadge}</td>
@@ -1025,6 +1061,11 @@
         }
 
         // --- Export & Clear ---
+        function getAbsentMembers(eventId) {
+            const present = new Set(attendanceData.filter(a => a.eventId === eventId).map(a => a.nim));
+            return membersData.filter(m => !present.has(m.nim));
+        }
+
         function exportCSV() {
             const filterEventId = document.getElementById('filter-event-select').value;
             let exportData = attendanceData;
@@ -1042,15 +1083,26 @@
             }
 
             const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-            const headers = ['Kegiatan', 'Data/NIM', 'Nama', 'Tanggal', 'Waktu Hadir', 'Status'];
+            const headers = ['Kegiatan', 'NIM', 'Nama', 'Jabatan', 'Prodi', 'Tanggal', 'Waktu Hadir', 'Status'];
+            const memberInfo = nim => membersData.find(m => m.nim === nim) || {};
             const rows = exportData.map(item => [
                 q(item.eventName),
                 q(item.nim),
                 q(item.nama),
+                q(item.jabatan || memberInfo(item.nim).jabatan),
+                q(memberInfo(item.nim).prodi),
                 q(item.tanggal),
                 q(item.waktu),
                 q(item.status)
             ]);
+
+            // Untuk satu kegiatan, sertakan anggota yang tidak hadir
+            if (filterEventId !== 'ALL') {
+                const ev = eventsData.find(e => e.id === filterEventId);
+                getAbsentMembers(filterEventId).forEach(m => rows.push([
+                    q(ev ? ev.name : ''), q(m.nim), q(m.nama), q(m.jabatan), q(m.prodi), q(''), q(''), q('Tidak Hadir')
+                ]));
+            }
 
             const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
             const date = new Date().toISOString().split('T')[0];
