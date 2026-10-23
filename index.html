@@ -111,19 +111,19 @@
 
     <!-- Header -->
     <header class="bg-white text-gray-800 shadow-md z-10 relative border-b-4 border-blue-900">
-        <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between gap-3">
+        <div class="max-w-md lg:max-w-none mx-auto px-4 lg:px-6 py-2 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
                 <img src="icons/logo.png" alt="Logo BEM PEM Akamigas" class="h-11 w-11 object-contain flex-shrink-0">
                 <div class="leading-tight min-w-0">
                     <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider truncate">Badan Eksekutif Mahasiswa</p>
-                    <h1 class="text-base font-extrabold text-blue-900 truncate">PEM Akamigas</h1>
+                    <h1 class="text-base font-extrabold text-blue-900 truncate">PEM Akamigas <span class="hidden lg:inline font-semibold text-gray-400">· Sistem Absensi</span></h1>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <button id="btn-install" onclick="installApp()" class="hidden text-xs font-semibold bg-blue-900 text-white px-2 py-1 rounded-md shadow-sm">
                     <i class="fa-solid fa-download"></i> Install
                 </button>
-                <div id="clock" class="text-xs font-mono font-semibold bg-gray-100 text-gray-700 px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                <div id="clock" class="text-xs lg:text-sm font-mono font-semibold bg-gray-100 text-gray-700 px-2 py-1 rounded-md border border-gray-200 shadow-sm">
                     00:00:00
                 </div>
             </div>
@@ -131,11 +131,13 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 overflow-y-auto relative w-full">
-        <div class="max-w-md mx-auto min-h-full p-4 pb-28">
+    <main class="flex-1 overflow-y-auto relative w-full lg:pl-60">
+        <div class="max-w-md lg:max-w-6xl mx-auto min-h-full p-4 pb-28 lg:p-8">
 
             <!-- VIEW 1: SCANNER PANITIA -->
             <div id="view-scan" class="view-section flex flex-col h-full">
+              <div class="flex flex-col flex-1 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
+                <div class="lg:col-span-2 lg:order-2">
 
                 <!-- Event Selector -->
                 <div class="mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -152,12 +154,20 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 flex-1 flex flex-col items-center justify-center relative">
+                <div class="hidden lg:flex bg-blue-50 border border-blue-100 rounded-lg p-3 items-start gap-3 mt-4">
+                    <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
+                    <p class="text-xs text-blue-800">Sistem otomatis mendeteksi status <strong>Hadir/Terlambat</strong> berdasarkan batas waktu kegiatan. Di laptop, gunakan webcam atau pilih <em>Scan an Image File</em> untuk membaca foto QR.</p>
+                </div>
+                </div>
+
+                <div class="lg:col-span-3 lg:order-1 bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 lg:mb-0 flex-1 flex flex-col items-center justify-center relative lg:min-h-[480px]">
                     <div id="reader" class="w-full"></div>
                     <div id="scan-indicator" class="absolute inset-0 border-4 border-transparent pointer-events-none rounded-xl transition-all duration-300"></div>
                 </div>
 
-                <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
+              </div>
+
+                <div class="lg:hidden bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
                     <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
                     <p class="text-xs text-blue-800">Sistem otomatis mendeteksi status <strong>Hadir/Terlambat</strong> berdasarkan batas waktu kegiatan.</p>
                 </div>
@@ -165,7 +175,7 @@
 
             <!-- VIEW 2: DAFTAR HADIR -->
             <div id="view-list" class="view-section hidden flex-col h-full">
-                <div class="mb-4">
+                <div class="mb-4 lg:max-w-sm">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Kegiatan</label>
                     <select id="filter-event-select" onchange="updateTable()" class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
                         <option value="ALL">Semua Kegiatan</option>
@@ -180,18 +190,18 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center shadow-sm">
+                <div class="grid grid-cols-3 gap-2 lg:gap-4 mb-4">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-2 lg:p-4 text-center shadow-sm">
                         <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total Anggota</p>
-                        <p id="summary-total" class="text-xl font-extrabold text-blue-800 mt-1">0</p>
+                        <p id="summary-total" class="text-xl lg:text-3xl font-extrabold text-blue-800 mt-1">0</p>
                     </div>
-                    <div class="bg-green-50 border border-green-100 rounded-lg p-2 text-center shadow-sm">
+                    <div class="bg-green-50 border border-green-100 rounded-lg p-2 lg:p-4 text-center shadow-sm">
                         <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Tepat Waktu</p>
-                        <p id="summary-hadir" class="text-xl font-extrabold text-green-800 mt-1">0</p>
+                        <p id="summary-hadir" class="text-xl lg:text-3xl font-extrabold text-green-800 mt-1">0</p>
                     </div>
-                    <div class="bg-orange-50 border border-orange-100 rounded-lg p-2 text-center shadow-sm">
+                    <div class="bg-orange-50 border border-orange-100 rounded-lg p-2 lg:p-4 text-center shadow-sm">
                         <p class="text-[10px] font-bold text-orange-600 uppercase tracking-wider">Terlambat</p>
-                        <p id="summary-terlambat" class="text-xl font-extrabold text-orange-800 mt-1">0</p>
+                        <p id="summary-terlambat" class="text-xl lg:text-3xl font-extrabold text-orange-800 mt-1">0</p>
                     </div>
                 </div>
 
@@ -216,7 +226,7 @@
                     </div>
                 </div>
                 <div class="mt-4 flex gap-2">
-                    <button onclick="clearData()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium py-2 rounded-lg transition-colors border border-red-200">
+                    <button onclick="clearData()" class="w-full lg:w-auto lg:px-6 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium py-2 rounded-lg transition-colors border border-red-200">
                         <i class="fa-solid fa-trash mr-1"></i> Reset Data
                     </button>
                 </div>
@@ -229,7 +239,8 @@
                     <p class="text-sm text-gray-500">Buat kegiatan untuk dihubungkan ke scanner.</p>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <div class="flex flex-col flex-1 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 lg:mb-0">
                     <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Buat Kegiatan Baru</h3>
                     <div class="space-y-3">
                         <div>
@@ -252,12 +263,13 @@
                     </div>
                 </div>
 
-                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div class="lg:col-span-3 flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                     <h3 class="font-semibold text-gray-800 p-4 border-b bg-gray-50">Daftar Kegiatan</h3>
                     <div class="overflow-y-auto flex-1 p-2 space-y-2" id="event-list-container">
                         <!-- Events populated here -->
                     </div>
                 </div>
+              </div>
             </div>
 
             <!-- VIEW 4: DATABASE ANGGOTA -->
@@ -267,6 +279,8 @@
                     <p class="text-sm text-gray-500">Data ini digunakan untuk mencocokkan QR Code ID Card.</p>
                 </div>
 
+              <div class="flex flex-col flex-1 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
+                <div class="lg:col-span-2">
                 <!-- Import dari gambar QR Code -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
                     <h3 class="font-semibold text-gray-800 mb-1 border-b pb-2">Import dari File QR Code</h3>
@@ -299,7 +313,7 @@
                 <!-- Buat QR Code untuk ID Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
                     <h3 class="font-semibold text-gray-800 mb-1 border-b pb-2">QR Code Anggota</h3>
-                    <p class="text-xs text-gray-500 mb-3">QR dibuat otomatis dari NIM setiap anggota. Tempel di ID Card, atau kirim gambarnya ke anggota agar di-scan dari HP. Untuk satu anggota, tekan ikon <i class="fa-solid fa-qrcode"></i> di daftar bawah.</p>
+                    <p class="text-xs text-gray-500 mb-3">QR dibuat otomatis dari NIM setiap anggota. Tempel di ID Card, atau kirim gambarnya ke anggota agar di-scan dari HP. Untuk satu anggota, tekan ikon <i class="fa-solid fa-qrcode"></i> di Daftar Anggota.</p>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="printAllCards()" class="bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 rounded-md shadow-sm transition-colors text-sm">
                             <i class="fa-solid fa-print mr-1"></i> Cetak / PDF
@@ -328,7 +342,9 @@
                     </div>
                 </div>
 
-                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                </div>
+
+                <div class="lg:col-span-3 lg:sticky lg:top-0 flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                     <div class="flex justify-between items-center p-3 border-b bg-gray-50">
                         <h3 class="font-semibold text-gray-800 text-sm">Daftar Anggota (<span id="member-count">0</span>)</h3>
                         <button onclick="exportMembersCSV()" class="text-xs text-green-700 font-semibold hover:underline">
@@ -338,7 +354,7 @@
                     <div class="px-3 pt-3">
                         <input type="search" id="member-search" oninput="renderMemberList()" placeholder="Cari nama / NIM..." class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
                     </div>
-                    <div class="overflow-y-auto flex-1">
+                    <div class="overflow-y-auto flex-1 lg:max-h-[calc(100vh-14rem)]">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <tbody id="member-tbody" class="divide-y divide-gray-100">
                                 <!-- Members populated here -->
@@ -346,31 +362,33 @@
                         </table>
                     </div>
                 </div>
+              </div>
             </div>
 
         </div>
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-20 pb-safe">
-        <div class="max-w-md mx-auto flex justify-around">
-            <button onclick="switchTab('scan')" id="tab-scan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-blue-600">
-                <i class="fa-solid fa-camera text-xl"></i>
-                <span class="text-[10px] font-semibold">Scanner</span>
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-20 pb-safe lg:pb-0 lg:top-16 lg:w-60 lg:border-t-0 lg:border-r">
+        <div class="max-w-md mx-auto flex justify-around lg:flex-col lg:justify-start lg:max-w-none lg:p-3 lg:gap-1">
+            <p class="hidden lg:block px-3 pt-2 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Menu</p>
+            <button onclick="switchTab('scan')" id="tab-scan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 lg:flex-none lg:flex-row lg:gap-3 lg:px-4 lg:rounded-lg lg:hover:bg-gray-50 text-blue-600">
+                <i class="fa-solid fa-camera text-xl lg:text-base lg:w-5"></i>
+                <span class="text-[10px] lg:text-sm font-semibold">Scanner</span>
             </button>
-            <button onclick="switchTab('list')" id="tab-list" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
-                <i class="fa-solid fa-clipboard-list text-xl relative">
+            <button onclick="switchTab('list')" id="tab-list" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 lg:flex-none lg:flex-row lg:gap-3 lg:px-4 lg:rounded-lg lg:hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-clipboard-list text-xl lg:text-base lg:w-5 relative">
                     <span id="badge-count" class="hidden absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white"></span>
                 </i>
-                <span class="text-[10px] font-medium">Laporan</span>
+                <span class="text-[10px] lg:text-sm font-medium">Laporan</span>
             </button>
-            <button onclick="switchTab('kegiatan')" id="tab-kegiatan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
-                <i class="fa-solid fa-calendar-check text-xl"></i>
-                <span class="text-[10px] font-medium">Kegiatan</span>
+            <button onclick="switchTab('kegiatan')" id="tab-kegiatan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 lg:flex-none lg:flex-row lg:gap-3 lg:px-4 lg:rounded-lg lg:hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-calendar-check text-xl lg:text-base lg:w-5"></i>
+                <span class="text-[10px] lg:text-sm font-medium">Kegiatan</span>
             </button>
-            <button onclick="switchTab('anggota')" id="tab-anggota" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
-                <i class="fa-solid fa-users text-xl"></i>
-                <span class="text-[10px] font-medium">Anggota</span>
+            <button onclick="switchTab('anggota')" id="tab-anggota" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 lg:flex-none lg:flex-row lg:gap-3 lg:px-4 lg:rounded-lg lg:hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-users text-xl lg:text-base lg:w-5"></i>
+                <span class="text-[10px] lg:text-sm font-medium">Anggota</span>
             </button>
         </div>
     </nav>
@@ -500,7 +518,7 @@
             });
 
             document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-blue-600');
+                el.classList.remove('text-blue-600', 'lg:bg-blue-50');
                 el.classList.add('text-gray-400');
                 el.querySelector(':scope > span').classList.remove('font-semibold');
                 el.querySelector(':scope > span').classList.add('font-medium');
@@ -512,7 +530,7 @@
 
             const selectedNav = document.getElementById(`tab-${tabId}`);
             selectedNav.classList.remove('text-gray-400');
-            selectedNav.classList.add('text-blue-600');
+            selectedNav.classList.add('text-blue-600', 'lg:bg-blue-50');
             selectedNav.querySelector(':scope > span').classList.remove('font-medium');
             selectedNav.querySelector(':scope > span').classList.add('font-semibold');
 
