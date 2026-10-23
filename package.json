@@ -5,18 +5,9 @@
   "description": "Aplikasi absensi BEM PEM Akamigas berbasis scan QR Code",
   "scripts": {
     "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o vendor/tailwind.css --minify",
-    "build:web": "node scripts/build-web.js",
     "start": "http-server -p 8080 -c-1 ."
   },
-  "dependencies": {
-    "@capacitor/android": "7.6.9",
-    "@capacitor/core": "7.6.9",
-    "@capacitor/filesystem": "7.1.9",
-    "@capacitor/share": "7.0.4"
-  },
   "devDependencies": {
-    "@capacitor/assets": "3.0.5",
-    "@capacitor/cli": "7.6.9",
     "http-server": "^14.1.1",
     "tailwindcss": "3.4.5"
   }

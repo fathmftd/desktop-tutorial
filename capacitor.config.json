@@ -1,8 +1,0 @@
-{
-  "appId": "com.bempemakamigas.absensi",
-  "appName": "Absensi BEM",
-  "webDir": "dist",
-  "android": {
-    "adjustMarginsForEdgeToEdge": "auto"
-  }
-}
