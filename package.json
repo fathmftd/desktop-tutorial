@@ -1,0 +1,14 @@
+{
+  "name": "absensi-bem-pem-akamigas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplikasi absensi BEM PEM Akamigas berbasis scan QR Code",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o vendor/tailwind.css --minify",
+    "start": "http-server -p 8080 -c-1 ."
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "tailwindcss": "3.4.5"
+  }
+}

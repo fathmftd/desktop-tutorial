@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Sistem Absensi BEM PEM Akamigas</title>
+
+    <!-- PWA / Aplikasi -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Absensi BEM">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <!-- Tailwind CSS (hasil build lokal, lihat package.json) -->
+    <link rel="stylesheet" href="vendor/tailwind.css">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- QR Code Scanner Library -->
+    <script src="vendor/html5-qrcode.min.js" type="text/javascript"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Fix for HTML5 QR Code Scanner styling overrides */
+        #reader {
+            border: none !important;
+            background: #000;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            width: 100% !important;
+        }
+        #reader__dashboard_section_csr span {
+            color: white !important;
+        }
+        #reader__dashboard_section_swaplink {
+            color: #3b82f6 !important;
+            text-decoration: none;
+        }
+        #reader button {
+            background-color: #1e3a8a !important; /* Blue 900 */
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-weight: 500 !important;
+            margin: 5px !important;
+        }
+
+        .toast-enter {
+            animation: slideInRight 0.3s ease-out forwards;
+        }
+        .toast-exit {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white text-gray-800 shadow-md z-10 relative border-b-4 border-blue-900">
+        <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <img src="icons/logo.png" alt="Logo BEM PEM Akamigas" class="h-11 w-11 object-contain flex-shrink-0">
+                <div class="leading-tight min-w-0">
+                    <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider truncate">Badan Eksekutif Mahasiswa</p>
+                    <h1 class="text-base font-extrabold text-blue-900 truncate">PEM Akamigas</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-install" onclick="installApp()" class="hidden text-xs font-semibold bg-blue-900 text-white px-2 py-1 rounded-md shadow-sm">
+                    <i class="fa-solid fa-download"></i> Install
+                </button>
+                <div id="clock" class="text-xs font-mono font-semibold bg-gray-100 text-gray-700 px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                    00:00:00
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto relative w-full">
+        <div class="max-w-md mx-auto h-full p-4 pb-24">
+
+            <!-- VIEW 1: SCANNER PANITIA -->
+            <div id="view-scan" class="view-section flex flex-col h-full">
+
+                <!-- Event Selector -->
+                <div class="mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kegiatan Aktif</label>
+                    <select id="active-event-select" onchange="saveState()" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm font-medium">
+                        <option value="">-- Pilih Kegiatan Terlebih Dahulu --</option>
+                    </select>
+                </div>
+
+                <div class="mb-2 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Scan Kehadiran</h2>
+                        <p class="text-sm text-gray-500">Scan QR Code di ID Card Mahasiswa.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 flex-1 flex flex-col items-center justify-center relative">
+                    <div id="reader" class="w-full"></div>
+                    <div id="scan-indicator" class="absolute inset-0 border-4 border-transparent pointer-events-none rounded-xl transition-all duration-300"></div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
+                    <p class="text-xs text-blue-800">Sistem otomatis mendeteksi status <strong>Hadir/Terlambat</strong> berdasarkan batas waktu kegiatan.</p>
+                </div>
+            </div>
+
+            <!-- VIEW 2: DAFTAR HADIR -->
+            <div id="view-list" class="view-section hidden flex-col h-full">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Kegiatan</label>
+                    <select id="filter-event-select" onchange="updateTable()" class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+                        <option value="ALL">Semua Kegiatan</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xl font-bold text-gray-800">Laporan Kehadiran</h2>
+                    <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-1.5 px-3 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> Export
+                    </button>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total Anggota</p>
+                        <p id="summary-total" class="text-xl font-extrabold text-blue-800 mt-1">0</p>
+                    </div>
+                    <div class="bg-green-50 border border-green-100 rounded-lg p-2 text-center shadow-sm">
+                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Tepat Waktu</p>
+                        <p id="summary-hadir" class="text-xl font-extrabold text-green-800 mt-1">0</p>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-100 rounded-lg p-2 text-center shadow-sm">
+                        <p class="text-[10px] font-bold text-orange-600 uppercase tracking-wider">Terlambat</p>
+                        <p id="summary-terlambat" class="text-xl font-extrabold text-orange-800 mt-1">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 border-b border-gray-200 text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold">Nama / NIM</th>
+                                    <th class="px-4 py-3 font-semibold">Waktu</th>
+                                    <th class="px-4 py-3 font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-tbody" class="divide-y divide-gray-100">
+                                <tr>
+                                    <td colspan="3" class="px-4 py-8 text-center text-gray-400 italic">Belum ada data kehadiran.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="clearData()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium py-2 rounded-lg transition-colors border border-red-200">
+                        <i class="fa-solid fa-trash mr-1"></i> Reset Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW 3: MANAJEMEN KEGIATAN -->
+            <div id="view-kegiatan" class="view-section hidden flex-col h-full">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Manajemen Kegiatan</h2>
+                    <p class="text-sm text-gray-500">Buat kegiatan untuk dihubungkan ke scanner.</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Buat Kegiatan Baru</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Nama Kegiatan</label>
+                            <input type="text" id="input-event-name" placeholder="Contoh: Rapat Pleno I" class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Jam Mulai</label>
+                                <input type="time" id="input-event-start" class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-red-600 mb-1 font-bold">Batas Terlambat</label>
+                                <input type="time" id="input-event-late" class="w-full px-3 py-2 rounded-md border border-red-300 focus:border-red-500 outline-none text-sm">
+                            </div>
+                        </div>
+                        <button onclick="addEvent()" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 rounded-md shadow-sm transition-colors text-sm mt-2">
+                            <i class="fa-solid fa-plus mr-1"></i> Tambah Kegiatan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <h3 class="font-semibold text-gray-800 p-4 border-b bg-gray-50">Daftar Kegiatan</h3>
+                    <div class="overflow-y-auto flex-1 p-2 space-y-2" id="event-list-container">
+                        <!-- Events populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: DATABASE ANGGOTA -->
+            <div id="view-anggota" class="view-section hidden flex-col h-full">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Database Anggota</h2>
+                    <p class="text-sm text-gray-500">Data ini digunakan untuk mencocokkan QR Code ID Card.</p>
+                </div>
+
+                <!-- Import dari gambar QR Code -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-1 border-b pb-2">Import dari File QR Code</h3>
+                    <p class="text-xs text-gray-500 mb-3">Download folder QR Code dari Google Drive, lalu pilih semua gambarnya di sini (bisa banyak sekaligus). Isi QR akan dibaca otomatis, dan nama file dipakai sebagai nama anggota jika QR hanya berisi NIM.</p>
+                    <label class="w-full bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 rounded-md shadow-sm transition-colors text-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-qrcode"></i> Pilih Gambar QR Code
+                        <input type="file" id="input-qr-files" accept="image/*" multiple class="hidden" onchange="importQrImages(this.files)">
+                    </label>
+                    <label class="mt-2 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-md transition-colors text-sm flex items-center justify-center gap-2 cursor-pointer border border-gray-200">
+                        <i class="fa-solid fa-file-csv"></i> Import CSV (NIM,Nama)
+                        <input type="file" id="input-member-csv" accept=".csv,text/csv,text/plain" class="hidden" onchange="importMemberCSV(this.files[0])">
+                    </label>
+                    <div id="qr-file-reader" class="hidden"></div>
+                    <p id="import-progress" class="hidden text-xs text-blue-700 mt-2 font-medium"></p>
+                </div>
+
+                <!-- Review hasil import -->
+                <div id="import-review" class="hidden bg-white rounded-xl shadow-sm border-2 border-blue-300 p-4 mb-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-2">
+                        <h3 class="font-semibold text-gray-800 text-sm">Periksa Hasil Import (<span id="import-review-count">0</span>)</h3>
+                        <button onclick="cancelImport()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">Lengkapi/ubah nama bila perlu, lalu simpan.</p>
+                    <div id="import-review-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    <button onclick="commitImport()" class="mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-md shadow-sm transition-colors text-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Semua ke Database
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Tambah Anggota (Manual)</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Data QR (NIM / ID)</label>
+                            <input type="text" id="input-member-nim" placeholder="Sesuai isi QR code di ID card..." class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                            <input type="text" id="input-member-nama" placeholder="Masukkan nama..." class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <button onclick="addMember()" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 rounded-md shadow-sm transition-colors text-sm">
+                            <i class="fa-solid fa-user-plus mr-1"></i> Simpan Anggota
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center p-3 border-b bg-gray-50">
+                        <h3 class="font-semibold text-gray-800 text-sm">Daftar Anggota (<span id="member-count">0</span>)</h3>
+                        <button onclick="exportMembersCSV()" class="text-xs text-green-700 font-semibold hover:underline">
+                            <i class="fa-solid fa-download"></i> Export
+                        </button>
+                    </div>
+                    <div class="px-3 pt-3">
+                        <input type="search" id="member-search" oninput="renderMemberList()" placeholder="Cari nama / NIM..." class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div class="overflow-y-auto flex-1">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <tbody id="member-tbody" class="divide-y divide-gray-100">
+                                <!-- Members populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-20 pb-safe">
+        <div class="max-w-md mx-auto flex justify-around">
+            <button onclick="switchTab('scan')" id="tab-scan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-blue-600">
+                <i class="fa-solid fa-camera text-xl"></i>
+                <span class="text-[10px] font-semibold">Scanner</span>
+            </button>
+            <button onclick="switchTab('list')" id="tab-list" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-clipboard-list text-xl relative">
+                    <span id="badge-count" class="hidden absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white"></span>
+                </i>
+                <span class="text-[10px] font-medium">Laporan</span>
+            </button>
+            <button onclick="switchTab('kegiatan')" id="tab-kegiatan" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-calendar-check text-xl"></i>
+                <span class="text-[10px] font-medium">Kegiatan</span>
+            </button>
+            <button onclick="switchTab('anggota')" id="tab-anggota" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
+                <i class="fa-solid fa-users text-xl"></i>
+                <span class="text-[10px] font-medium">Anggota</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 w-64 pointer-events-none"></div>
+
+    <!-- Scripts -->
+    <script>
+        // --- State Management ---
+        const STORAGE_KEY = 'absensi-bem-pem-akamigas-v1';
+        let attendanceData = [];
+        let eventsData = [];
+        let membersData = [];
+        let html5QrcodeScanner = null;
+        let pendingImport = [];
+        let deferredInstallPrompt = null;
+
+        // Data disimpan di perangkat (localStorage) agar tidak hilang saat aplikasi ditutup
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    attendanceData,
+                    eventsData,
+                    membersData,
+                    activeEventId: document.getElementById('active-event-select').value
+                }));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                const state = JSON.parse(raw);
+                attendanceData = state.attendanceData || [];
+                eventsData = state.eventsData || [];
+                membersData = state.membersData || [];
+                updateEventDropdowns();
+                document.getElementById('active-event-select').value = state.activeEventId || '';
+                return true;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        // Kegiatan contoh untuk pertama kali dibuka
+        function initDefaultData() {
+            eventsData = [
+                { id: 'EVT-1', name: 'Rapat Koordinasi BEM', startTime: '15:00', lateTime: '15:30' }
+            ];
+            membersData = [];
+            updateEventDropdowns();
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // --- Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+            document.getElementById('clock').innerText = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- Toast Logic ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let iconClass = 'fa-check-circle text-green-500';
+            let bgClass = 'bg-white border-green-500';
+
+            if (type === 'error') {
+                iconClass = 'fa-circle-xmark text-red-500';
+                bgClass = 'bg-white border-red-500';
+            } else if (type === 'warning') {
+                iconClass = 'fa-triangle-exclamation text-yellow-500';
+                bgClass = 'bg-white border-yellow-500';
+            }
+
+            toast.className = `toast-enter pointer-events-auto flex items-center gap-3 p-3 rounded-lg shadow-lg border-l-4 ${bgClass} text-sm font-medium text-gray-700`;
+            toast.innerHTML = `<i class="fa-solid ${iconClass} text-lg"></i><span class="flex-1">${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => {
+                    if (container.contains(toast)) container.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // --- Tab Navigation ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-blue-600');
+                el.classList.add('text-gray-400');
+                el.querySelector(':scope > span').classList.remove('font-semibold');
+                el.querySelector(':scope > span').classList.add('font-medium');
+            });
+
+            const selectedSection = document.getElementById(`view-${tabId}`);
+            selectedSection.classList.remove('hidden');
+            selectedSection.classList.add('flex');
+
+            const selectedNav = document.getElementById(`tab-${tabId}`);
+            selectedNav.classList.remove('text-gray-400');
+            selectedNav.classList.add('text-blue-600');
+            selectedNav.querySelector(':scope > span').classList.remove('font-medium');
+            selectedNav.querySelector(':scope > span').classList.add('font-semibold');
+
+            if (tabId === 'scan') {
+                initScanner();
+            } else {
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.clear().catch(e => console.error(e));
+                    html5QrcodeScanner = null;
+                }
+            }
+
+            if (tabId === 'list') {
+                document.getElementById('badge-count').classList.add('hidden');
+                updateTable();
+            }
+        }
+
+        // --- Kegiatan (Event) Management ---
+        function addEvent() {
+            const name = document.getElementById('input-event-name').value.trim();
+            const start = document.getElementById('input-event-start').value;
+            const late = document.getElementById('input-event-late').value;
+
+            if (!name || !start || !late) {
+                showToast('Semua kolom kegiatan harus diisi!', 'warning');
+                return;
+            }
+
+            const newEvent = {
+                id: 'EVT-' + Date.now(),
+                name: name,
+                startTime: start,
+                lateTime: late
+            };
+
+            eventsData.push(newEvent);
+            showToast('Kegiatan berhasil ditambahkan!', 'success');
+
+            // Clear form
+            document.getElementById('input-event-name').value = '';
+            document.getElementById('input-event-start').value = '';
+            document.getElementById('input-event-late').value = '';
+
+            updateEventDropdowns();
+            renderEventList();
+            saveState();
+        }
+
+        function renderEventList() {
+            const container = document.getElementById('event-list-container');
+            container.innerHTML = '';
+
+            if (eventsData.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Belum ada kegiatan.</p>';
+                return;
+            }
+
+            eventsData.forEach(evt => {
+                const el = document.createElement('div');
+                el.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3 flex justify-between items-center';
+                el.innerHTML = `
+                    <div>
+                        <h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(evt.name)}</h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fa-regular fa-clock"></i> Mulai: ${escapeHtml(evt.startTime)} |
+                            <span class="text-red-500 font-medium">Batas: ${escapeHtml(evt.lateTime)}</span>
+                        </p>
+                    </div>
+                    <button onclick="deleteEvent('${escapeHtml(evt.id)}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-md">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function deleteEvent(id) {
+            eventsData = eventsData.filter(e => e.id !== id);
+            updateEventDropdowns();
+            renderEventList();
+            saveState();
+            showToast('Kegiatan dihapus', 'success');
+        }
+
+        function updateEventDropdowns() {
+            const scanSelect = document.getElementById('active-event-select');
+            const listSelect = document.getElementById('filter-event-select');
+
+            // Retain selection if possible
+            const currentScanVal = scanSelect.value;
+            const currentListVal = listSelect.value;
+
+            scanSelect.innerHTML = '<option value="">-- Pilih Kegiatan Terlebih Dahulu --</option>';
+            listSelect.innerHTML = '<option value="ALL">Semua Kegiatan</option>';
+
+            eventsData.forEach(evt => {
+                const opt1 = document.createElement('option');
+                opt1.value = evt.id;
+                opt1.text = evt.name;
+                scanSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = evt.id;
+                opt2.text = evt.name;
+                listSelect.appendChild(opt2);
+            });
+
+            scanSelect.value = eventsData.some(e => e.id === currentScanVal) ? currentScanVal : '';
+            listSelect.value = eventsData.some(e => e.id === currentListVal) ? currentListVal : 'ALL';
+        }
+
+        // --- Anggota (Member) Management ---
+
+        // Membaca isi QR: mendukung "NIM", "NIM|Nama", "NIM;Nama", "NIM,Nama", "NIM - Nama",
+        // baris baru, maupun JSON {"nim": "...", "nama": "..."}
+        function parseQrContent(text) {
+            const raw = String(text || '').trim();
+            try {
+                const obj = JSON.parse(raw);
+                if (obj && typeof obj === 'object') {
+                    const nim = obj.nim || obj.NIM || obj.id || obj.ID || '';
+                    const nama = obj.nama || obj.Nama || obj.name || obj.Name || '';
+                    if (nim) return { nim: String(nim).trim(), nama: String(nama).trim() };
+                }
+            } catch (e) { /* bukan JSON */ }
+
+            const parts = raw.split(/\s*[|;,\n\t]\s*|\s+-\s+/).map(p => p.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+                const idIdx = parts.findIndex(p => /^[A-Za-z]{0,4}\d[\d.\-/]*$/.test(p));
+                if (idIdx !== -1) {
+                    const nama = parts.filter((_, i) => i !== idIdx).find(p => /[A-Za-z]/.test(p)) || '';
+                    return { nim: parts[idIdx], nama };
+                }
+            }
+            return { nim: raw, nama: '' };
+        }
+
+        // Nama file "21144001_Andi Saputra.png" -> "Andi Saputra"
+        function nameFromFileName(fileName, nim) {
+            let base = String(fileName || '').replace(/\.[^.]+$/, '');
+            if (nim) base = base.split(nim).join(' ');
+            base = base.replace(/\b(qr|qrcode|qr-code|id ?card)\b/gi, ' ')
+                       .replace(/[_\-.()\[\]]+/g, ' ')
+                       .replace(/\b\d{5,}\b/g, ' ')
+                       .replace(/\s+/g, ' ')
+                       .trim();
+            return base.replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        function findMemberByQr(text) {
+            const qrString = String(text || '').trim();
+            const parsed = parseQrContent(qrString);
+            return membersData.find(m => m.qr === qrString)
+                || membersData.find(m => m.nim === qrString)
+                || membersData.find(m => m.nim === parsed.nim);
+        }
+
+        function addMember() {
+            const nim = document.getElementById('input-member-nim').value.trim();
+            const nama = document.getElementById('input-member-nama').value.trim();
+
+            if (!nim || !nama) {
+                showToast('Data QR/NIM dan Nama harus diisi!', 'warning');
+                return;
+            }
+
+            // check duplicate
+            if (findMemberByQr(nim)) {
+                showToast('Anggota dengan Data QR tersebut sudah ada!', 'error');
+                return;
+            }
+
+            membersData.push({ nim, nama, qr: nim });
+
+            // Clear form
+            document.getElementById('input-member-nim').value = '';
+            document.getElementById('input-member-nama').value = '';
+
+            renderMemberList();
+            saveState();
+            showToast('Anggota berhasil disimpan!', 'success');
+        }
+
+        function deleteMember(nim) {
+            const member = membersData.find(m => m.nim === nim);
+            if (!member || !confirm(`Hapus anggota ${member.nama} (${member.nim})?`)) return;
+            membersData = membersData.filter(m => m.nim !== nim);
+            renderMemberList();
+            saveState();
+            showToast('Anggota dihapus', 'success');
+        }
+
+        function renderMemberList() {
+            const tbody = document.getElementById('member-tbody');
+            const keyword = (document.getElementById('member-search').value || '').toLowerCase();
+            document.getElementById('member-count').innerText = membersData.length;
+            tbody.innerHTML = '';
+
+            if (membersData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-400 italic whitespace-normal">Belum ada data anggota. Import file QR Code dari folder Google Drive Anda.</td></tr>';
+                return;
+            }
+
+            const list = [...membersData]
+                .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+                .filter(m => !keyword || m.nama.toLowerCase().includes(keyword) || m.nim.toLowerCase().includes(keyword));
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-400 italic">Tidak ditemukan.</td></tr>';
+                return;
+            }
+
+            list.forEach(member => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-3 py-2 border-b border-gray-100 font-mono text-xs text-blue-700 font-medium">${escapeHtml(member.nim)}</td>
+                    <td class="px-3 py-2 border-b border-gray-100 text-sm text-gray-800 whitespace-normal">${escapeHtml(member.nama)}</td>
+                    <td class="px-3 py-2 border-b border-gray-100 text-right">
+                        <button class="text-red-400 hover:text-red-600" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tr.querySelector('button').onclick = () => deleteMember(member.nim);
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Import anggota dari gambar QR Code ---
+        async function importQrImages(fileList) {
+            const files = Array.from(fileList || []);
+            if (files.length === 0) return;
+
+            const progress = document.getElementById('import-progress');
+            progress.classList.remove('hidden');
+
+            const fileReader = new Html5Qrcode('qr-file-reader');
+            const results = [];
+            const failed = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                progress.innerText = `Membaca QR ${i + 1} dari ${files.length}: ${file.name}`;
+                try {
+                    const text = (await fileReader.scanFile(file, false)).trim();
+                    const parsed = parseQrContent(text);
+                    const nama = parsed.nama || nameFromFileName(file.name, parsed.nim);
+                    results.push({ qr: text, nim: parsed.nim, nama, fileName: file.name });
+                } catch (e) {
+                    failed.push(file.name);
+                }
+            }
+            try { fileReader.clear(); } catch (e) { /* ignore */ }
+
+            progress.innerText = `Selesai: ${results.length} QR terbaca` + (failed.length ? `, ${failed.length} gagal (${failed.join(', ')})` : '');
+            document.getElementById('input-qr-files').value = '';
+
+            addToPendingImport(results);
+        }
+
+        function importMemberCSV(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const rows = String(reader.result).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const results = [];
+                rows.forEach((line, idx) => {
+                    const cols = line.split(/[;,\t]/).map(c => c.replace(/^"|"$/g, '').trim());
+                    if (idx === 0 && /nim|nama|name/i.test(line) && !/\d{4,}/.test(line)) return; // header
+                    if (cols[0]) results.push({ qr: cols[0], nim: cols[0], nama: cols[1] || '' });
+                });
+                document.getElementById('input-member-csv').value = '';
+                addToPendingImport(results);
+            };
+            reader.readAsText(file);
+        }
+
+        function addToPendingImport(results) {
+            results.forEach(r => {
+                if (!r.nim) return;
+                if (pendingImport.some(p => p.nim === r.nim)) return;
+                r.exists = !!findMemberByQr(r.qr) || membersData.some(m => m.nim === r.nim);
+                pendingImport.push(r);
+            });
+
+            if (pendingImport.length === 0) {
+                showToast('Tidak ada QR Code yang berhasil dibaca.', 'error');
+                return;
+            }
+            renderImportReview();
+        }
+
+        function renderImportReview() {
+            const box = document.getElementById('import-review');
+            const list = document.getElementById('import-review-list');
+            document.getElementById('import-review-count').innerText = pendingImport.length;
+            box.classList.remove('hidden');
+            list.innerHTML = '';
+
+            pendingImport.forEach((item, idx) => {
+                const el = document.createElement('div');
+                el.className = `border rounded-lg p-2 ${item.exists ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`;
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-1 gap-2">
+                        <span class="font-mono text-xs text-blue-700 font-semibold break-all">${escapeHtml(item.nim)}</span>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            ${item.exists ? '<span class="text-[10px] text-yellow-700 font-semibold">Sudah ada (akan diperbarui)</span>' : ''}
+                            <button class="text-gray-400 hover:text-red-500" title="Lewati"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <input type="text" value="${escapeHtml(item.nama)}" placeholder="Nama lengkap..." class="w-full px-2 py-1.5 rounded-md border ${item.nama ? 'border-gray-300' : 'border-red-300'} focus:border-blue-500 outline-none text-sm">
+                    ${item.fileName ? `<p class="text-[10px] text-gray-400 mt-1 truncate">${escapeHtml(item.fileName)}</p>` : ''}
+                `;
+                el.querySelector('input').oninput = e => { pendingImport[idx].nama = e.target.value; };
+                el.querySelector('button').onclick = () => {
+                    pendingImport.splice(idx, 1);
+                    if (pendingImport.length === 0) cancelImport(); else renderImportReview();
+                };
+                list.appendChild(el);
+            });
+        }
+
+        function commitImport() {
+            const missing = pendingImport.filter(p => !p.nama.trim());
+            if (missing.length > 0) {
+                showToast(`${missing.length} anggota belum diisi namanya.`, 'warning');
+                return;
+            }
+
+            let added = 0, updated = 0;
+            pendingImport.forEach(p => {
+                const existing = findMemberByQr(p.qr) || membersData.find(m => m.nim === p.nim);
+                if (existing) {
+                    existing.nama = p.nama.trim();
+                    existing.qr = p.qr;
+                    updated++;
+                } else {
+                    membersData.push({ nim: p.nim, nama: p.nama.trim(), qr: p.qr });
+                    added++;
+                }
+            });
+
+            cancelImport();
+            renderMemberList();
+            saveState();
+            showToast(`${added} anggota ditambahkan, ${updated} diperbarui.`, 'success');
+        }
+
+        function cancelImport() {
+            pendingImport = [];
+            document.getElementById('import-review').classList.add('hidden');
+            document.getElementById('import-review-list').innerHTML = '';
+        }
+
+        function exportMembersCSV() {
+            if (membersData.length === 0) {
+                showToast('Belum ada data anggota.', 'warning');
+                return;
+            }
+            const rows = membersData.map(m => [`"${m.nim}"`, `"${m.nama.replace(/"/g, '""')}"`].join(','));
+            downloadCSV(['NIM,Nama', ...rows].join('\n'), 'Database_Anggota_BEM.csv');
+        }
+
+        function downloadCSV(csvContent, fileName) {
+            const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Scanner & Logic ---
+        function initScanner() {
+            if (!html5QrcodeScanner) {
+                document.getElementById('reader').innerHTML = '';
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader",
+                    { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0, rememberLastUsedCamera: true },
+                    false
+                );
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            }
+        }
+
+        function flashIndicator(colorClass) {
+            const indicator = document.getElementById('scan-indicator');
+            indicator.className = `absolute inset-0 border-4 pointer-events-none rounded-xl transition-all duration-300 ${colorClass} bg-${colorClass.split('-')[1]}-500/20`;
+            setTimeout(() => {
+                indicator.className = `absolute inset-0 border-4 border-transparent pointer-events-none rounded-xl transition-all duration-300`;
+            }, 300);
+        }
+
+        function vibrate(pattern) {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+        }
+
+        function onScanSuccess(decodedText) {
+            const eventId = document.getElementById('active-event-select').value;
+
+            if (!eventId) {
+                flashIndicator('border-red-500');
+                showToast('Gagal: Pilih Kegiatan Terlebih Dahulu!', 'error');
+                vibrate([100, 50, 100]);
+                pauseScannerBriefly();
+                return;
+            }
+
+            const activeEvent = eventsData.find(e => e.id === eventId);
+            const qrString = decodedText.trim();
+
+            // Lookup Member
+            const member = findMemberByQr(qrString);
+            const nim = member ? member.nim : parseQrContent(qrString).nim;
+            const namaMember = member ? member.nama : (parseQrContent(qrString).nama || 'Anggota Tidak Dikenal');
+
+            // Check if already scanned for this event
+            const isExist = attendanceData.find(item => item.nim === nim && item.eventId === eventId);
+            if (isExist) {
+                flashIndicator('border-yellow-400');
+                showToast(`${namaMember} sudah tercatat sebelumnya!`, 'warning');
+                vibrate([100, 50, 100]);
+                pauseScannerBriefly();
+                return;
+            }
+
+            // Calculate Status (Hadir / Terlambat)
+            const now = new Date();
+            const currentTimeStr = now.toLocaleTimeString('it-IT', {hour12: false}).substring(0, 5); // Format "HH:mm"
+
+            // Simple string comparison for time (e.g. "09:05" > "09:00" -> true)
+            let status = 'Hadir';
+            if (currentTimeStr > activeEvent.lateTime) {
+                status = 'Terlambat';
+            }
+
+            // Save Data
+            const timestamp = now.toLocaleTimeString('id-ID', { hour12: false });
+            attendanceData.push({
+                eventId: eventId,
+                eventName: activeEvent.name,
+                nim: nim,
+                nama: namaMember,
+                tanggal: now.toLocaleDateString('id-ID'),
+                waktu: timestamp,
+                status: status
+            });
+            saveState();
+
+            // UI Feedback
+            if (!member) {
+                flashIndicator('border-red-500');
+                showToast(`QR tidak terdaftar (${nim}) - tetap dicatat`, 'error');
+            } else if (status === 'Terlambat') {
+                flashIndicator('border-orange-500');
+                showToast(`${namaMember} - TERLAMBAT`, 'warning');
+            } else {
+                flashIndicator('border-green-500');
+                showToast(`${namaMember} - HADIR`, 'success');
+            }
+            vibrate(150);
+
+            updateTable();
+
+            // Update Badge
+            const badge = document.getElementById('badge-count');
+            badge.innerText = attendanceData.length;
+            badge.classList.remove('hidden');
+
+            pauseScannerBriefly();
+        }
+
+        function pauseScannerBriefly() {
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.pause(true); } catch (e) { return; }
+                setTimeout(() => {
+                    try { if (html5QrcodeScanner) html5QrcodeScanner.resume(); } catch (e) { /* ignore */ }
+                }, 2000);
+            }
+        }
+
+        function onScanFailure(error) {
+            // ignore continuous scanning errors
+        }
+
+        // --- Daftar Hadir Table Logic ---
+        function updateTable() {
+            const tbody = document.getElementById('attendance-tbody');
+            const filterEventId = document.getElementById('filter-event-select').value;
+
+            let filteredData = attendanceData;
+            if (filterEventId !== 'ALL') {
+                filteredData = attendanceData.filter(item => item.eventId === filterEventId);
+            }
+
+            // Calculate Summary
+            const totalAnggota = membersData.length;
+            const hadirCount = filteredData.filter(item => item.status === 'Hadir').length;
+            const terlambatCount = filteredData.filter(item => item.status === 'Terlambat').length;
+
+            // Update UI Summary
+            document.getElementById('summary-total').innerText = totalAnggota;
+            document.getElementById('summary-hadir').innerText = hadirCount;
+            document.getElementById('summary-terlambat').innerText = terlambatCount;
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400 italic">Belum ada data kehadiran.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            // Reverse so newest is on top
+            [...filteredData].reverse().forEach((item) => {
+                const statusBadge = item.status === 'Hadir'
+                    ? `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">Hadir</span>`
+                    : `<span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">Terlambat</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-3">
+                        <p class="text-gray-800 font-semibold text-sm leading-tight">${escapeHtml(item.nama)}</p>
+                        <p class="font-mono text-xs text-gray-500">${escapeHtml(item.nim)}</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 text-xs font-medium">${escapeHtml(item.waktu)}${item.tanggal ? `<br><span class="text-gray-400">${escapeHtml(item.tanggal)}</span>` : ''}</td>
+                    <td class="px-4 py-3">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Export & Clear ---
+        function exportCSV() {
+            const filterEventId = document.getElementById('filter-event-select').value;
+            let exportData = attendanceData;
+            let eventLabel = "Semua_Kegiatan";
+
+            if (filterEventId !== 'ALL') {
+                exportData = attendanceData.filter(item => item.eventId === filterEventId);
+                const ev = eventsData.find(e => e.id === filterEventId);
+                if (ev) eventLabel = ev.name.replace(/[^\w]+/g, '_');
+            }
+
+            if (exportData.length === 0) {
+                showToast('Belum ada data untuk diexport!', 'warning');
+                return;
+            }
+
+            const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            const headers = ['Kegiatan', 'Data/NIM', 'Nama', 'Tanggal', 'Waktu Hadir', 'Status'];
+            const rows = exportData.map(item => [
+                q(item.eventName),
+                q(item.nim),
+                q(item.nama),
+                q(item.tanggal),
+                q(item.waktu),
+                q(item.status)
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const date = new Date().toISOString().split('T')[0];
+            downloadCSV(csvContent, `Absensi_${eventLabel}_${date}.csv`);
+
+            showToast('Data berhasil diunduh (CSV)', 'success');
+        }
+
+        function clearData() {
+            if (attendanceData.length === 0) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 transform scale-100 transition-transform">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Hapus Semua Data Absensi?</h3>
+                    <p class="text-gray-500 text-sm mb-6">Data yang dihapus tidak dapat dikembalikan. (Data anggota & kegiatan tidak akan terhapus).</p>
+                    <div class="flex gap-3">
+                        <button id="btn-cancel-clear" class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors">Batal</button>
+                        <button id="btn-confirm-clear" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">Ya, Hapus</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('btn-cancel-clear').onclick = () => document.body.removeChild(modal);
+            document.getElementById('btn-confirm-clear').onclick = () => {
+                attendanceData = [];
+                updateTable();
+                saveState();
+                showToast('Data kehadiran telah direset.', 'success');
+                document.body.removeChild(modal);
+                document.getElementById('badge-count').classList.add('hidden');
+            };
+        }
+
+        // --- Install sebagai aplikasi (PWA) ---
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.getElementById('btn-install').classList.remove('hidden');
+        });
+
+        async function installApp() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('btn-install').classList.add('hidden');
+        }
+
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            navigator.serviceWorker.register('sw.js').catch(e => console.error(e));
+        }
+
+        // --- Initialization ---
+        window.onload = () => {
+            if (!loadState()) {
+                initDefaultData();
+                saveState();
+            }
+            renderEventList();
+            renderMemberList();
+            switchTab('scan');
+        };
+
+    </script>
+</body>
+</html>
