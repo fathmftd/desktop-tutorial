@@ -1,5 +1,5 @@
 // Service worker: cache aplikasi agar bisa dibuka offline setelah kunjungan pertama.
-const CACHE = 'absensi-bem-v2';
+const CACHE = 'absensi-bem-v3';
 const ASSETS = [
     './',
     './index.html',
@@ -11,6 +11,8 @@ const ASSETS = [
     './icons/apple-touch-icon.png',
     './vendor/tailwind.css',
     './vendor/html5-qrcode.min.js',
+    './vendor/qrcode-generator.js',
+    './vendor/jszip.min.js',
     './vendor/fontawesome/css/all.min.css',
     './vendor/fontawesome/webfonts/fa-solid-900.woff2',
     './vendor/fontawesome/webfonts/fa-regular-400.woff2'
